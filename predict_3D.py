@@ -9,11 +9,30 @@ from segmentation_models.metrics import iou_score, f1_score
 from pathlib import Path
 import cv2
 import dataset_management as dm
+import argparse
 
 
-def predict_3D(first_dataset_test, second_dataset_test, predictions_path, model_path):
+parser = argparse.ArgumentParser()
+
+parser.add_argument('first_dataset_path', type=str,
+                    help='Path to test subset of first dataset.')
+parser.add_argument('second_dataset_path', type=str,
+                    help='Path to test subset of second dataset.')
+parser.add_argument('model_path', type=str,
+                    help='Path to model .md5 file.')
+parser.add_argument('predictions_path', type=str,
+                    help='Path where predictions will be saved.')
+
+
+def predict_3D():
+    args = parser.parse_args()
+    first_dataset_test = args.first_dataset_path
+    second_dataset_test = args.second_dataset_path
+    predictions_path = args.predictions_path
+    model_path = args.model_path
     first_dataset_path = Path(first_dataset_test)
     second_dataset_path = Path(second_dataset_test)
+    Path(predictions_path).mkdir(exist_ok=True, parents=True)
 
     backbone = 'resnet50'
     preprocess_input = get_preprocessing(backbone)
@@ -78,4 +97,4 @@ def predict_3D(first_dataset_test, second_dataset_test, predictions_path, model_
 
 
 if __name__ == '__main__':
-    predict_3D('firstDataset/test/', 'secondDataset/test/', '/predictions/', '/models/final/model.h5')
+    predict_3D()

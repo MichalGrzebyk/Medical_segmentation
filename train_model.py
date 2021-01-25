@@ -1,13 +1,24 @@
-#REMEMBER TO DO: pip install segmentation_models
+# REMEMBER TO DO: pip install segmentation_models
 import tensorflow as tf
 from keras.callbacks import ModelCheckpoint
 from segmentation_models.losses import dice_loss
 from segmentation_models import Unet
 from segmentation_models import get_preprocessing
 from segmentation_models.metrics import iou_score, f1_score
+import argparse
 
 
-def from_directory_datagen():
+parser = argparse.ArgumentParser()
+
+parser.add_argument('model_final_path', type=str,
+                    help='Path where final model will be saved.')
+parser.add_argument('model_checkpoint_path', type=str,
+                    help='Path where model will be saved every epoch.')
+parser.add_argument('dataset_path', type=str,
+                    help='Path to dataset.')
+
+
+def from_directory_datagen(path):
     flow_params = {'target_size': (256, 256),
                    'class_mode': None,
                    'color_mode': 'rgb'
@@ -22,27 +33,27 @@ def from_directory_datagen():
     )
 
     tr_im = images_datagen.flow_from_directory(
-        '/content/train/data/',
+        path + 'train/data/',
         batch_size=32,
         seed=42,
         **flow_params
     )
 
     tr_mask = mask_datagen.flow_from_directory(
-        '/content/train/mask/',
+        path + 'train/mask/',
         batch_size=32,
         seed=42,
         **flow_params
     )
     val_im = images_datagen.flow_from_directory(
-        '/content/val/data/',
+        path + 'val/data/',
         batch_size=32,
         seed=42,
         **flow_params
     )
 
     val_mask = mask_datagen.flow_from_directory(
-        '/content/val/mask/',
+        path + 'val/mask/',
         batch_size=32,
         seed=42,
         **flow_params
@@ -51,13 +62,17 @@ def from_directory_datagen():
     return tr_im, tr_mask, val_im, val_mask
 
 
-def train_net(final_path, checkpoint_path):
+def train_net():
+    args = parser.parse_args()
+    final_path = args.model_final_path
+    checkpoint_path = args.model_checkpoint_path
+    dataset_path = args.dataset_path
     with tf.device("/gpu:0"):
         backbone = 'resnet50'
         preprocess_input = get_preprocessing(backbone)
 
         # load your data
-        x_train, y_train, x_val, y_val = from_directory_datagen()
+        x_train, y_train, x_val, y_val = from_directory_datagen(dataset_path)
 
         # preprocess input
         x_train = preprocess_input(x_train)
@@ -87,4 +102,4 @@ def train_net(final_path, checkpoint_path):
 
 
 if __name__ == '__main__':
-    train_net('/models/final/', '/models/checkpoints/')
+    train_net()
